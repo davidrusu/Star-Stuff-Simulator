@@ -26,7 +26,7 @@ void setup() {
 void reset() {
   particles = new float[nParticles][2];
   vels = new float[nParticles][2];
-  int thickness = clamp(0, particles.length, particles.length / 50000);
+  int thickness = max(1, clamp(0, particles.length, particles.length / 50000));
   int spiralPoints = particles.length / thickness;
   for (int i = 0; i < spiralPoints; i++) {
     float ratio = ((float)i)/spiralPoints;
