@@ -30,9 +30,9 @@ void reset() {
   int spiralPoints = particles.length / thickness;
   for (int i = 0; i < spiralPoints; i++) {
     float ratio = ((float)i)/spiralPoints;
-    float radius = height / 2; //height * 2 / 5;
+    float radius = height / 2;
     float rad = (radius * 2 * PI * i / spiralPoints / 50);
-    float r = radius * ratio;// (radius) * (ratio) + (radius - thickness) * (1 - ratio) ;
+    float r = radius * ratio;
     for (int j = 0; j < thickness; j++) {
       float ray = r + 20 * ((float) j / thickness) ;
       particles[i * thickness + j] = new float[]{width/2 + sin (rad)*ray, height/2 + cos(rad)*ray};
@@ -105,9 +105,7 @@ void updateParticles() {
     float vy = v[1];
     int x = min(grid.length - 1, max(0, (int) ((px + cellW / 2) / cellW)));
     int y = min(grid[x].length - 1, max(0, (int) ((py + cellH / 2) / cellH)));
-    float transferRate = 0.5;//(grid[x][y].dist() - v.dist()) / (grid[x][y].dist() + v.dist());
-    float origX = vx;
-    float origY = vy;
+    float transferRate = 0.5;
     Vec g = grid[x][y];
     float dvx = g.x - vx;
     float dvy = g.y - vy;
