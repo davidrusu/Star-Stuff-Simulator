@@ -1,10 +1,11 @@
 float sqrt2 = sqrt(2);
-float maxSpeed = 5;
-int nParticles = 250000;
+float maxSpeed = 1;
+int nParticles = 200000;
 int nParticlesStep = 10000;
 float cellW, cellH; // set at setup
 
-Vec[][] grid = new Vec[200][200];
+int gridSize = 200;
+Vec[][] grid = new Vec[gridSize][gridSize];
 Vec[][] buffer = new Vec[grid.length][grid[0].length];
 float[][] particles;
 float[][] vels;
@@ -16,11 +17,12 @@ boolean drawingField = false;
 boolean showMenu = true;
 
 void setup() {
-  size(displayWidth, displayHeight);
+  size(displayWidth, displayHeight, OPENGL);
   cellW = ((float) width) / grid.length;
   cellH = ((float) height) / grid[0].length;
   reset();
   noSmooth();
+  frameRate(1000);
 }
 
 void reset() {
@@ -35,7 +37,8 @@ void reset() {
     float r = radius * ratio;
     for (int j = 0; j < thickness; j++) {
       float ray = r + 20 * ((float) j / thickness) ;
-      particles[i * thickness + j] = new float[]{width/2 + sin (rad)*ray, height/2 + cos(rad)*ray};
+      particles[i * thickness + j] = new float[]{width/2 + sin(rad)*ray, height/2 + cos(rad)*ray};
+      //particles[i * thickness + j] = new float[]{random(width), random(height)};
       vels[i * thickness + j] = new float[]{0, 0};
     }
   }
@@ -88,7 +91,7 @@ void attract(float ax, float ay, float s) {
 
 void update() {
   if (mousePressed && mouseButton == LEFT) {
-    attract(mouseX, mouseY, 10000);
+    attract(mouseX, mouseY, 1000);
   }
   updateBlackHoles();
   updateGrid();
@@ -111,24 +114,24 @@ void updateParticles() {
     float dvy = g.y - vy;
     vx += dvx * transferRate;
     vy += dvy * transferRate;
-    float effect = 1 / (cellW * cellH / 10);
+    float effect = 1 / (cellW * cellH);
     grid[x][y].addScaled(-dvx, -dvy, effect);
 
     if (px < 0) {
       px = 0;
-      vx *= -1;
+      vx = abs(vx);
     }
     if (px > width) {
       px = width;
-      vx *= -1;
+      vx = -abs(vx);
     }
     if (py < 0) {
       py = 0;
-      vy *= -1;
+      vy = abs(vy);
     }
     if (py > height) {
       py = height;
-      vy *= -1;
+      vy = -abs(vy);
     }
     px += vx;
     py += vy;
@@ -204,10 +207,10 @@ void updateGrid() {
         v.add(0, -1);
       }
 
-      float pressure = 1;
-      if (x == 0 || x == grid.length-1 || y == 0 || y == grid[0].length-1) {
-        v.scale(pressure);
-      }
+      //float pressure = 1;
+      //if (x == 0 || x == grid.length-1 || y == 0 || y == grid[0].length-1) {
+      //  //v.scale(pressure);
+      //}
 
       float realD = max(0.000001, v.dist());
       float d = min(maxSpeed, realD);
@@ -223,15 +226,18 @@ void updateGrid() {
 void draw() {
   update();
   background(0);
-  if (drawingField) {
-    drawField();
-  }
+  //if (drawingField) {
+  
 
   drawBlackHoles();
   loadPixels();
   drawParticles();
   updatePixels();
   fill(255);
+  if (drawingField) {
+    drawField();
+  }
+  //}
   if (showMenu) {
     text("fps " + frameRate, 25, 25);
     text("particles (UP / DOWN): currently " + particles.length + ", next reset " + nParticles, 25, 40);
@@ -266,18 +272,28 @@ void drawParticles() {
 }
 
 void drawField() {
-  float scale = sqrt(cellW * cellW + cellH*cellH) / maxSpeed * 2;
+  float scale = 10;//sqrt(cellW * cellW + cellH*cellH);
   int points = (int) (scale * 10);
+  int segments = 2;
+  int length = points / segments;
+  int t = -(millis() / segments / 2);
+  
   loadPixels();
-  for (int x=0; x< grid.length; x+=1) {
+  for (int x=0; x < grid.length; x+=1) {
     for (int y = 0; y < grid[x].length; y+=1) {
       Vec vec = grid[x][y];
+      
       for (int i = 0; i < points; i++) {
-        float p = (float) i / points;
+        int hash = ((int) (x ^ (y * grid[x].length)) % 13) + 1; 
+        if (((t / hash + i) / length) % 2 == 0) {
+          continue;
+        }
+        float p = ((float) (i+1)) / points;
         float pc = p*p;
-        int px = max(0, min(width-1, (int) (scale * vec.x*p + x * cellW)));
-        int py = max(0, min(height-1, (int) (scale * vec.y*p + y * cellH)));
-        int c = color(0 * (1-pc) + 50 * pc, 0 * (1-pc) + 50 * pc, 0 * (1-pc) + 50 * pc);
+        int px = max(0, min(width-1, (int) (scale * vec.x*p + x * cellW + cellW / 2)));
+        int py = max(0, min(height-1, (int) (scale * vec.y*p + y * cellH + cellH / 2)));
+        int c = color(50);//0 * (1-pc) + 50 * pc); //, 0 * (1-pc) + 50 * pc, 0 * (1-pc) + 50 * pc);
+        
         int index = py * width + px;
         pixels[index] = c;
       }
